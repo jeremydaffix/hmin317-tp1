@@ -62,11 +62,11 @@ public:
     virtual ~GeometryEngine();
 
     void drawCubeGeometry(QOpenGLShaderProgram *program);
-    void drawPlaneGeometry(QOpenGLShaderProgram *program);
+    void drawPlaneGeometry(QOpenGLShaderProgram *program, int nbrSommets = 16);
 
 private:
     void initCubeGeometry();
-    void initPlaneGeometry();
+    void initPlaneGeometry(int nbrSommets = 16);
 
     QOpenGLBuffer arrayBuf;
     QOpenGLBuffer indexBuf;

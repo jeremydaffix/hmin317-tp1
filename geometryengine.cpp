@@ -207,11 +207,17 @@ void GeometryEngine::initPlaneGeometry(int nbrSommets)
             //vertices[pos].position = QVector3D((float)j, (float)i, 0.0); // plan normal
 
             // relief
-            if(i > 3 && i < 12 && j > 3 && j < 12)
-            //if((i > 3 && i < 7) || ( i > 9 && i < 13) && (j > 3 && j < 7) || ( j > 9 && j < 13))
-                vertices[pos].position = QVector3D((float)j, (float)i, 2.0);
-            else
+            if(i > 3 && i < 12 && j > 3 && j < 12) // partie relief
+            {
+                if((i < 7 || i > 9) && (j < 7 || j > 9))
+                    vertices[pos].position = QVector3D((float)j, (float)i, -2.0);
+                else
+                    vertices[pos].position = QVector3D((float)j, (float)i, 2.0);
+            }
+            else // partie plate
+            {
                 vertices[pos].position = QVector3D((float)j, (float)i, 0.0);
+            }
 
             vertices[pos].texCoord = QVector2D(1. / nbrFaces * j, 1. / nbrFaces * i);
 

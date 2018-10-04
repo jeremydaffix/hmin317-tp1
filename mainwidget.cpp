@@ -110,13 +110,84 @@ void MainWidget::timerEvent(QTimerEvent *)
         angularSpeed = 0.0;
     } else {
         // Update rotation
-        rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
+        //cameraRotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * cameraRotation; ////
 
         // Request an update
         update();
     }
+
+
+    // déplacement géré ici
+    // position pas changée dans l'event clavier
+    // on estime que timerEvent est lancée à un fps fixe
+
+    bool needUpdate = true;
+
+    switch(movementDirection)
+    {
+        case DIRECTION::UP:
+            if(cameraPosition.z() < -5) cameraPosition.setZ(cameraPosition.z() + 0.2);
+        break;
+
+        case DIRECTION::DOWN:
+            if(cameraPosition.z() > -25) cameraPosition.setZ(cameraPosition.z() - 0.2);
+        break;
+
+        case DIRECTION::LEFT:
+            if(cameraPosition.x() < -4) cameraPosition.setX(cameraPosition.x() + 0.2);
+        break;
+
+        case DIRECTION::RIGHT:
+            if(cameraPosition.x() > -10) cameraPosition.setX(cameraPosition.x() - 0.2);
+
+        break;
+
+        default:
+            needUpdate = false;
+        break;
+
+    }
+
+    if(needUpdate) update();
 }
 //! [1]
+
+
+
+void MainWidget::keyPressEvent(QKeyEvent* e)
+{
+
+    switch(e->key())
+    {
+        case Qt::Key_Up:
+            movementDirection = DIRECTION::UP;
+        break;
+
+        case Qt::Key_Down:
+            movementDirection = DIRECTION::DOWN;
+        break;
+
+        case Qt::Key_Left:
+            movementDirection = DIRECTION::LEFT;
+        break;
+
+        case Qt::Key_Right:
+            movementDirection = DIRECTION::RIGHT;
+        break;
+
+        default:
+            movementDirection = DIRECTION::NO;
+        break;
+    }
+
+}
+
+void MainWidget::keyReleaseEvent(QKeyEvent* e)
+{
+    movementDirection = DIRECTION::NO;
+}
+
+
 
 void MainWidget::initializeGL()
 {
@@ -208,9 +279,8 @@ void MainWidget::paintGL()
 //! [6]
     // Calculate model view transformation
     QMatrix4x4 matrix;
-    //matrix.translate(0.0, 0.0, -15.0);
-    matrix.translate(0.0, 5.0, -55.0);
-    matrix.rotate(rotation);
+    matrix.translate(cameraPosition);
+    matrix.rotate(cameraRotation);
 
     // Set modelview-projection matrix
     program.setUniformValue("mvp_matrix", projection * matrix);

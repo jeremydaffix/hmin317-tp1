@@ -62,6 +62,19 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
 
+
+
+// direction pour le déplacement de la caméra
+enum DIRECTION {
+  NO,
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT
+};
+
+
+
 class GeometryEngine;
 
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
@@ -75,6 +88,8 @@ public:
 protected:
     void mousePressEvent(QMouseEvent *e) override;
     void mouseReleaseEvent(QMouseEvent *e) override;
+    void keyPressEvent(QKeyEvent* e) override;
+    void keyReleaseEvent(QKeyEvent* e) override;
     void timerEvent(QTimerEvent *e) override;
 
     void initializeGL() override;
@@ -96,7 +111,14 @@ private:
     QVector2D mousePressPosition;
     QVector3D rotationAxis;
     qreal angularSpeed;
-    QQuaternion rotation;
+
+    QQuaternion cameraRotation = QQuaternion::fromEulerAngles(-60, 0, 0);
+    QVector3D cameraPosition = QVector3D(-8.0, -8.0, -5.0);
+
+    DIRECTION movementDirection = DIRECTION::NO;
 };
+
+
+
 
 #endif // MAINWIDGET_H

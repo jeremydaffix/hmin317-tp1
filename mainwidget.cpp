@@ -54,12 +54,14 @@
 
 #include <math.h>
 
-MainWidget::MainWidget(QWidget *parent) :
+MainWidget::MainWidget(QWidget *parent, int _fps) :
     QOpenGLWidget(parent),
     geometries(0),
     texture(0),
     angularSpeed(0)
 {
+
+    fps = _fps;
 }
 
 MainWidget::~MainWidget()
@@ -68,6 +70,7 @@ MainWidget::~MainWidget()
     // and the buffers.
     makeCurrent();
     delete texture;
+    //delete heightmap;
     delete geometries;
     doneCurrent();
 }
@@ -116,6 +119,11 @@ void MainWidget::timerEvent(QTimerEvent *)
         update();
     }
 
+    // pour faire tourner la caméra sur elle même
+    cameraRotation = QQuaternion::fromEulerAngles(0, rotationSpeed, 0) * cameraRotation; // tourner à vitesse constante
+    //qDebug() << cameraRotation.toEulerAngles();
+
+    update();
 
     // déplacement géré ici
     // position pas changée dans l'event clavier
@@ -126,19 +134,20 @@ void MainWidget::timerEvent(QTimerEvent *)
     switch(movementDirection)
     {
         case DIRECTION::UP:
-            if(cameraPosition.z() < -5) cameraPosition.setZ(cameraPosition.z() + 0.2);
+        if(cameraPosition.z() > -4.0) cameraPosition.setZ(cameraPosition.z() - 0.2);
+
         break;
 
         case DIRECTION::DOWN:
-            if(cameraPosition.z() > -25) cameraPosition.setZ(cameraPosition.z() - 0.2);
+            if(cameraPosition.z() < -2) cameraPosition.setZ(cameraPosition.z() + 0.2);
         break;
 
         case DIRECTION::LEFT:
-            if(cameraPosition.x() < -4) cameraPosition.setX(cameraPosition.x() + 0.2);
+            if(cameraMoveLeftRight.x() > -2) cameraMoveLeftRight.setX(cameraMoveLeftRight.x() - 0.2);
         break;
 
         case DIRECTION::RIGHT:
-            if(cameraPosition.x() > -10) cameraPosition.setX(cameraPosition.x() - 0.2);
+            if(cameraMoveLeftRight.x() < 2) cameraMoveLeftRight.setX(cameraMoveLeftRight.x() + 0.2);
 
         break;
 
@@ -159,24 +168,39 @@ void MainWidget::keyPressEvent(QKeyEvent* e)
 
     switch(e->key())
     {
-        case Qt::Key_Up:
+        case Qt::Key_Z:
             movementDirection = DIRECTION::UP;
         break;
 
-        case Qt::Key_Down:
+        case Qt::Key_S:
             movementDirection = DIRECTION::DOWN;
         break;
 
-        case Qt::Key_Left:
+        case Qt::Key_Q:
             movementDirection = DIRECTION::LEFT;
         break;
 
-        case Qt::Key_Right:
+        case Qt::Key_D:
             movementDirection = DIRECTION::RIGHT;
         break;
 
         default:
             movementDirection = DIRECTION::NO;
+        break;
+    }
+
+
+    switch(e->key())
+    {
+        case Qt::Key_Up:
+            if(rotationSpeed < 10.0) rotationSpeed += 0.1;
+        break;
+
+        case Qt::Key_Down:
+            if(rotationSpeed > 0.2) rotationSpeed -= 0.1;
+        break;
+
+        default:
         break;
     }
 
@@ -209,7 +233,7 @@ void MainWidget::initializeGL()
     geometries = new GeometryEngine;
 
     // Use QBasicTimer because its faster than QTimer
-    timer.start(12, this);
+    timer.start(1000 / fps, this);
 }
 
 //! [3]
@@ -222,6 +246,10 @@ void MainWidget::initShaders()
     // Compile fragment shader
     if (!program.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader.glsl"))
         close();
+
+    // Compile fragment shader
+    //if (!program.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader_color.glsl"))
+      //  close();
 
     // Link shader pipeline
     if (!program.link())
@@ -239,12 +267,12 @@ void MainWidget::initTextures()
     // Load cube.png image
     texture = new QOpenGLTexture(QImage(":/cube.png").mirrored());
 
+    //heightmap = new QImage(QImage(":/island_heightmap.png"));
+
     // Set nearest filtering mode for texture minification
     texture->setMinificationFilter(QOpenGLTexture::Nearest);
-
     // Set bilinear filtering mode for texture magnification
     texture->setMagnificationFilter(QOpenGLTexture::Linear);
-
     // Wrap texture coordinates by repeating
     // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
     texture->setWrapMode(QOpenGLTexture::Repeat);
@@ -279,8 +307,22 @@ void MainWidget::paintGL()
 //! [6]
     // Calculate model view transformation
     QMatrix4x4 matrix;
-    matrix.translate(cameraPosition);
+
+    //matrix.translate(cameraPosition);
+    //matrix.rotate(cameraRotation);
+
+     //matrix.lookAt(cameraPosition, QVector3D(0, 0, 0), QVector3D(0.0, 1.0, 0.0));
+
+    // on inverse R et T si on veut faire tourner la camera sur elle même
+    // (sinon elle tourne autour de l'origine)
     matrix.rotate(cameraRotation);
+    matrix.translate(cameraPosition);
+
+    matrix.translate(cameraMoveLeftRight);
+
+    //QVector3D mlr =  QQuaternion::fromEulerAngles(0, cameraRotation.toEulerAngles().y(), 0) * cameraMoveLeftRight;
+    //matrix.translate(mlr);
+
 
     // Set modelview-projection matrix
     program.setUniformValue("mvp_matrix", projection * matrix);
@@ -291,5 +333,5 @@ void MainWidget::paintGL()
 
     // Draw cube geometry
     //geometries->drawCubeGeometry(&program);
-    geometries->drawPlaneGeometry(&program);
+    geometries->drawPlaneGeometry(&program, geometries->sizeTerrain);
 }

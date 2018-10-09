@@ -73,15 +73,24 @@ GeometryEngine::GeometryEngine()
     arrayBuf.create();
     indexBuf.create();
 
+    heightmap = new QImage(QImage(":/island_heightmap.png"));
+
     // Initializes cube geometry and transfers it to VBOs
     //initCubeGeometry();
-    initPlaneGeometry();
+
+     // si on change le nombre de sommets, ne pas oublier d'adapter l'affichage en conséquences !!!
+     //initPlaneGeometry(); // plan 16x16
+     //initTerrainGeometry(); // terrain avec relief 16x16
+     //initTerrainGeometry(sizeTerrain, 16. / sizeTerrain);
+     initTerrainGeometry(sizeTerrain, 16. / sizeTerrain, heightmap);
 }
 
 GeometryEngine::~GeometryEngine()
 {
     arrayBuf.destroy();
     indexBuf.destroy();
+
+    delete heightmap;
 }
 //! [0]
 
@@ -185,9 +194,8 @@ void GeometryEngine::drawCubeGeometry(QOpenGLShaderProgram *program)
 
 
 
-// QUESTION 3
 
-void GeometryEngine::initPlaneGeometry(int nbrSommets)
+void GeometryEngine::initPlaneGeometry(int nbrSommets, float size)
 {
     int nbrFaces = nbrSommets - 1;
     //int nbrIndices = (nbrFaces * nbrFaces * 6) + ((nbrFaces - 1) * 4);
@@ -204,20 +212,131 @@ void GeometryEngine::initPlaneGeometry(int nbrSommets)
 
             int pos = i * nbrSommets + j;
 
-            //vertices[pos].position = QVector3D((float)j, (float)i, 0.0); // plan normal
+            vertices[pos].position = QVector3D((float)j * size, (float)i * size, 0.0); // plan normal
 
-            // relief
-            if(i > 3 && i < 12 && j > 3 && j < 12) // partie relief
+            vertices[pos].texCoord = QVector2D(1. / nbrFaces * j, 1. / nbrFaces * i);
+
+        }
+    }
+
+
+
+    GLushort indices[nbrIndices];
+
+    int pos = 0;
+
+    // pour toutes les cases (15 x 15)
+    // 2 triangles à afficher
+    for(GLushort i = 0 ; i < nbrFaces ; ++i) { // ligne
+
+        for(GLushort j = 0 ; j < nbrFaces ; ++j) { // colonne
+
+            // trangle haut gauche
+            GLushort index1 = i * nbrSommets + j; // haut gauche
+            GLushort index2 = index1 + 1; // haut droit
+            GLushort index3 = index1 + nbrSommets; // bas gauche
+
+            // triangle bas droit
+            GLushort index4 = index3; // bas gauche
+            GLushort index5 = index3 + 1; // bas droit
+            GLushort index6 = index2; // haut droit
+
+            indices[pos++] = index1;
+            indices[pos++] = index2;
+            indices[pos++] = index3;
+
+            indices[pos++] = index4;
+            indices[pos++] = index5;
+            indices[pos++] = index6;
+
+            // sur une même ligne, on se retrouve au 1er point de la case suivante en haut à gauche
+        }
+
+        // changement de ligne
+        /*if(i != (nbrFaces - 1))*/ {
+
+            indices[pos++] = i * nbrSommets + nbrSommets;
+            indices[pos++] = i * nbrSommets; // déplacement à gauche
+            indices[pos++] = i * nbrSommets;
+            indices[pos++] = (i + 1) * nbrSommets; // déplacement d'une ligne
+        }
+    }
+
+    // Transfer vertex data to VBO 0
+    arrayBuf.bind();
+    arrayBuf.allocate(vertices, nbrSommets * nbrSommets * sizeof(VertexData));
+
+    // Transfer index data to VBO 1
+    indexBuf.bind();
+    indexBuf.allocate(indices, nbrIndices * sizeof(GLushort));
+
+}
+
+
+
+void GeometryEngine::initTerrainGeometry(int nbrSommets, float size, QImage* qi)
+{
+    int nbrFaces = nbrSommets - 1;
+    int nbrIndices = (nbrFaces * nbrFaces * 6) + (nbrFaces * 4);
+
+    VertexData vertices[nbrSommets * nbrSommets]; // tableau des sommets
+
+    // relief généré par heightmap
+    float stepHeightmap;
+    if(qi != NULL)
+    {
+        // la heightmap peut être très grande
+        // on prendra des échantillons en fonction de la taille de notre terrain
+        stepHeightmap =  qi->size().width() / nbrSommets;
+    }
+
+    int scaleRelief = nbrSommets / 16;
+    qDebug() << scaleRelief;
+
+    // pour tous les sommets
+    for(int i = 0 ; i < nbrSommets ; ++i) { // ligne
+
+        for(int j = 0 ; j < nbrSommets ; ++j) { // colonne
+
+            // on remplit ligne par ligne
+
+            int pos = i * nbrSommets + j;
+
+
+            // relief généré
+            if(qi == NULL)
             {
-                if((i < 7 || i > 9) && (j < 7 || j > 9))
-                    vertices[pos].position = QVector3D((float)j, (float)i, -2.0);
-                else
-                    vertices[pos].position = QVector3D((float)j, (float)i, 2.0);
+                if(i > 3 * scaleRelief && i < 12 * scaleRelief && j > 3 * scaleRelief && j < 12 * scaleRelief) // partie relief
+                {
+                    if((i < 7 * scaleRelief || i > 9 * scaleRelief) && (j < 7 * scaleRelief || j > 9 * scaleRelief))
+                        vertices[pos].position = QVector3D((float)j * size, (float)i * size, -2.0);
+                    else
+                        vertices[pos].position = QVector3D((float)j * size, (float)i * size, 2.0);
+                }
+                else // partie plate
+                {
+                    vertices[pos].position = QVector3D((float)j * size, (float)i * size, 0.0);
+                }
             }
-            else // partie plate
+
+            // relief généré par heightmap
+            else
             {
-                vertices[pos].position = QVector3D((float)j, (float)i, 0.0);
+                QColor col = qi->pixel(j * stepHeightmap, i * stepHeightmap);
+
+                //qDebug() << col;
+
+                int r, g, b, a;
+                col.getRgb(&r, &g, &b, &a);
+
+                float coef = 2.0;
+
+                float z = (r + g + b + a) / 255. / 4. * coef;
+
+                //qDebug() << z;
+                vertices[pos].position = QVector3D((float)j * size, (float)i * size, z);
             }
+
 
             vertices[pos].texCoord = QVector2D(1. / nbrFaces * j, 1. / nbrFaces * i);
 
@@ -279,6 +398,8 @@ void GeometryEngine::initPlaneGeometry(int nbrSommets)
 }
 
 
+
+
 void GeometryEngine::drawPlaneGeometry(QOpenGLShaderProgram *program, int nbrSommets)
 {
     int nbrFaces = nbrSommets - 1;
@@ -305,6 +426,8 @@ void GeometryEngine::drawPlaneGeometry(QOpenGLShaderProgram *program, int nbrSom
     program->enableAttributeArray(texcoordLocation);
     program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(VertexData));
 
-    // Draw cube geometry using indices from VBO 1
+    // Draw plane geometry using indices from VBO 1
     glDrawElements(GL_TRIANGLE_STRIP, nbrIndices, GL_UNSIGNED_SHORT, 0);
 }
+
+

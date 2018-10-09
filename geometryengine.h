@@ -54,6 +54,7 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
+#include <QImage>
 
 class GeometryEngine : protected QOpenGLFunctions
 {
@@ -63,13 +64,19 @@ public:
 
     void drawCubeGeometry(QOpenGLShaderProgram *program);
     void drawPlaneGeometry(QOpenGLShaderProgram *program, int nbrSommets = 16);
+    //void drawTerrainGeometry(QOpenGLShaderProgram *program, int nbrSommets = 16);
+
+    int sizeTerrain = 128; // n*n sommets
 
 private:
     void initCubeGeometry();
-    void initPlaneGeometry(int nbrSommets = 16);
+    void initPlaneGeometry(int nbrSommets = 16, float size = 1.0);
+    void initTerrainGeometry(int nbrSommets = 16, float size = 1.0, QImage* qi = NULL);
 
     QOpenGLBuffer arrayBuf;
     QOpenGLBuffer indexBuf;
+
+    QImage *heightmap;
 };
 
 #endif // GEOMETRYENGINE_H

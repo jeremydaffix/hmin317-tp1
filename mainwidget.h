@@ -82,7 +82,7 @@ class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
     Q_OBJECT
 
 public:
-    explicit MainWidget(QWidget *parent = 0);
+    explicit MainWidget(QWidget *parent = 0, int _fps = 60);
     ~MainWidget();
 
 protected:
@@ -105,6 +105,7 @@ private:
     GeometryEngine *geometries;
 
     QOpenGLTexture *texture;
+    //QImage *heightmap;
 
     QMatrix4x4 projection;
 
@@ -112,10 +113,18 @@ private:
     QVector3D rotationAxis;
     qreal angularSpeed;
 
-    QQuaternion cameraRotation = QQuaternion::fromEulerAngles(-60, 0, 0);
-    QVector3D cameraPosition = QVector3D(-8.0, -8.0, -5.0);
+    // pour faire tourner la camera sur elle-meme
+    // + inverser R et T dans paint
+    QQuaternion cameraRotation = QQuaternion::fromEulerAngles(-90, 0, 0); // orientation initiale caméra
+    QVector3D cameraPosition = QVector3D(-8, -8, -2); // position initiale caméra
+    QVector3D cameraMoveLeftRight = QVector3D(); // on stock le déplacement droite / gauche à part pour l'orienter en fonction de l'orientation caméra
+
 
     DIRECTION movementDirection = DIRECTION::NO;
+
+    float rotationSpeed = 0.5;
+
+    int fps = 0;
 };
 
 

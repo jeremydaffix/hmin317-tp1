@@ -113,7 +113,11 @@ private:
     QVector3D rotationAxis;
     qreal angularSpeed;
 
-    // pour faire tourner la camera sur elle-meme
+    // position et rotation tp1
+    //QVector3D cameraPosition = QVector3D(-8.0, -8.0, -5.0);
+    //QQuaternion cameraRotation = QQuaternion::fromEulerAngles(-60, 0, 0);
+
+    // pour faire tourner la camera sur elle-meme (tp2)
     // + inverser R et T dans paint
     QQuaternion cameraRotation = QQuaternion::fromEulerAngles(-90, 0, 0); // orientation initiale caméra
     QVector3D cameraPosition = QVector3D(-8, -8, -2); // position initiale caméra

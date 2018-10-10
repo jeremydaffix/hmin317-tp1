@@ -308,20 +308,26 @@ void MainWidget::paintGL()
     // Calculate model view transformation
     QMatrix4x4 matrix;
 
+    // position fixe caméra (tp1)
+    //matrix.translate(0.0, 0.0, -55.0);
+
+    // position au dessus du terrain, modifiable par ZQSD (tp1)
     //matrix.translate(cameraPosition);
     //matrix.rotate(cameraRotation);
 
      //matrix.lookAt(cameraPosition, QVector3D(0, 0, 0), QVector3D(0.0, 1.0, 0.0));
 
-    // on inverse R et T si on veut faire tourner la camera sur elle même
+    // on inverse R et T si on veut faire tourner la camera sur elle même (tp2)
     // (sinon elle tourne autour de l'origine)
     matrix.rotate(cameraRotation);
     matrix.translate(cameraPosition);
 
-    matrix.translate(cameraMoveLeftRight);
+    //matrix.translate(cameraMoveLeftRight);
 
-    //QVector3D mlr =  QQuaternion::fromEulerAngles(0, cameraRotation.toEulerAngles().y(), 0) * cameraMoveLeftRight;
-    //matrix.translate(mlr);
+    QVector3D mlr =  QQuaternion::fromEulerAngles(0, cameraRotation.toEulerAngles().y(), 0) * cameraMoveLeftRight;
+    //mlr.setZ(0);
+    qDebug() << cameraMoveLeftRight << mlr;
+    matrix.translate(mlr);
 
 
     // Set modelview-projection matrix

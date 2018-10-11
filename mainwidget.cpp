@@ -54,7 +54,7 @@
 
 #include <math.h>
 
-MainWidget::MainWidget(QWidget *parent, int _fps) :
+MainWidget::MainWidget(int _fps, QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
     texture(0),
@@ -134,21 +134,21 @@ void MainWidget::timerEvent(QTimerEvent *)
     switch(movementDirection)
     {
         case DIRECTION::UP:
-        if(cameraPosition.z() > -4.0) cameraPosition.setZ(cameraPosition.z() - 0.2);
-
+            //if(cameraPosition.z() > -4.0) cameraPosition.setZ(cameraPosition.z() - 0.2);
+            if(cameraMoveLeftRight.y() > -6) cameraMoveLeftRight.setY(cameraMoveLeftRight.y() - 0.2);
         break;
 
         case DIRECTION::DOWN:
-            if(cameraPosition.z() < -2) cameraPosition.setZ(cameraPosition.z() + 0.2);
+            //if(cameraPosition.z() < -2) cameraPosition.setZ(cameraPosition.z() + 0.2);
+            if(cameraMoveLeftRight.y() < 6) cameraMoveLeftRight.setY(cameraMoveLeftRight.y() + 0.2);
         break;
 
         case DIRECTION::LEFT:
-            if(cameraMoveLeftRight.x() > -2) cameraMoveLeftRight.setX(cameraMoveLeftRight.x() - 0.2);
+            if(cameraMoveLeftRight.x() < 6) cameraMoveLeftRight.setX(cameraMoveLeftRight.x() + 0.2);
         break;
 
         case DIRECTION::RIGHT:
-            if(cameraMoveLeftRight.x() < 2) cameraMoveLeftRight.setX(cameraMoveLeftRight.x() + 0.2);
-
+            if(cameraMoveLeftRight.x() > -6) cameraMoveLeftRight.setX(cameraMoveLeftRight.x() - 0.2);
         break;
 
         default:
@@ -240,16 +240,21 @@ void MainWidget::initializeGL()
 void MainWidget::initShaders()
 {
     // Compile vertex shader
-    if (!program.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshader.glsl"))
+    /*if (!program.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshader.glsl"))
         close();
 
     // Compile fragment shader
     if (!program.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader.glsl"))
+        close();*/
+
+
+
+    if (!program.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshader_color.glsl"))
+            close();
+
+    if (!program.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader_color.glsl"))
         close();
 
-    // Compile fragment shader
-    //if (!program.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader_color.glsl"))
-      //  close();
 
     // Link shader pipeline
     if (!program.link())
@@ -322,12 +327,12 @@ void MainWidget::paintGL()
     matrix.rotate(cameraRotation);
     matrix.translate(cameraPosition);
 
-    //matrix.translate(cameraMoveLeftRight);
+    matrix.translate(cameraMoveLeftRight);
 
-    QVector3D mlr =  QQuaternion::fromEulerAngles(0, cameraRotation.toEulerAngles().y(), 0) * cameraMoveLeftRight;
+    /*QVector3D mlr =  QQuaternion::fromEulerAngles(0, cameraRotation.toEulerAngles().y(), 0) * cameraMoveLeftRight;
     //mlr.setZ(0);
     qDebug() << cameraMoveLeftRight << mlr;
-    matrix.translate(mlr);
+    matrix.translate(mlr);*/
 
 
     // Set modelview-projection matrix

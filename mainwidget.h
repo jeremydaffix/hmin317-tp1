@@ -82,7 +82,7 @@ class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
     Q_OBJECT
 
 public:
-    explicit MainWidget(QWidget *parent = 0, int _fps = 60);
+    explicit MainWidget(int _fps = 60, QWidget *parent = 0);
     ~MainWidget();
 
 protected:
@@ -120,7 +120,7 @@ private:
     // pour faire tourner la camera sur elle-meme (tp2)
     // + inverser R et T dans paint
     QQuaternion cameraRotation = QQuaternion::fromEulerAngles(-90, 0, 0); // orientation initiale caméra
-    QVector3D cameraPosition = QVector3D(-8, -8, -2); // position initiale caméra
+    QVector3D cameraPosition = QVector3D(-16, -16, -3); // position initiale caméra
     QVector3D cameraMoveLeftRight = QVector3D(); // on stock le déplacement droite / gauche à part pour l'orienter en fonction de l'orientation caméra
 
 

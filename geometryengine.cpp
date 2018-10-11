@@ -82,7 +82,9 @@ GeometryEngine::GeometryEngine()
      //initPlaneGeometry(); // plan 16x16
      //initTerrainGeometry(); // terrain avec relief 16x16
      //initTerrainGeometry(sizeTerrain, 16. / sizeTerrain);
-     initTerrainGeometry(sizeTerrain, 16. / sizeTerrain, heightmap);
+     //initTerrainGeometry(sizeTerrain, 16. / sizeTerrain, heightmap);
+     initTerrainGeometry(sizeTerrain, 32. / sizeTerrain, heightmap); // + grand !
+
 }
 
 GeometryEngine::~GeometryEngine()

@@ -6,18 +6,14 @@ precision mediump float;
 
 uniform sampler2D texture;
 
-varying vec2 v_texcoord;
+varying vec3 terrain_color;
 
 
 //! [0]
 void main()
 {
-    vec4 col = vec4(1.00, 0.00, 0.00, 1.00);
+    gl_FragColor = vec4(terrain_color, 1.0);
 
-    gl_FragColor = col;
-
-    // Set fragment color from texture
-    //gl_FragColor = texture2D(texture, v_texcoord);
 }
 //! [0]
 
